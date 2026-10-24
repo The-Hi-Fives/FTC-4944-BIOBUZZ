@@ -18,7 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
-@TeleOp(name = "Batman is cool unlike you")
+@TeleOp
 public class pinpoint_FcTest extends OpMode {
     DcMotor fRight;
     DcMotor bRight;
@@ -56,9 +56,9 @@ public class pinpoint_FcTest extends OpMode {
 
         //Declare drive motor directions
         fLeft.setDirection(DcMotor.Direction.REVERSE);
-        bLeft.setDirection(DcMotor.Direction.REVERSE);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setDirection(DcMotor.Direction.REVERSE);
 
         passof = hardwareMap.get(DcMotor.class, "passof");
 
@@ -80,14 +80,15 @@ public class pinpoint_FcTest extends OpMode {
             pinpoint.resetPosAndIMU();
         }
         double botHeading = pinpoint.getHeading(AngleUnit.RADIANS);
+        telemetry.addData("Heading", botHeading);
         // setup for driving
         double forward = -gamepad1.left_stick_y;
         double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
 
         // start up the field centric's makes forward always forward!
-        double strafe_ = strafe*Math.cos(-botHeading) - forward*Math.sin(-botHeading);
-        double forward_ = strafe*Math.sin(-botHeading) + forward*Math.cos(-botHeading);
+        double strafe_ = strafe*Math.cos(botHeading) + forward*Math.sin(botHeading);
+        double forward_ = forward*Math.cos(botHeading) - strafe*Math.sin(botHeading);
 
         //adjusters for drive speed and a denominator to keep the motors at a constant speed of 1
         double drive_speed = gamepad1.left_trigger;
