@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -44,23 +45,37 @@ public class Fc_test extends OpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         fRight = hardwareMap.get(DcMotor.class, "fRight" );
-
         bRight = hardwareMap.get(DcMotor.class, "bRight" );
-
         fLeft = hardwareMap.get(DcMotor.class, "fLeft" );
-
         bLeft = hardwareMap.get(DcMotor.class, "bLeft" );
 
         //Declare drive motor directions
         fLeft.setDirection(DcMotor.Direction.REVERSE);
         bLeft.setDirection(DcMotor.Direction.REVERSE);
+        fRight.setDirection(DcMotor.Direction.FORWARD);
+        bRight.setDirection(DcMotor.Direction.FORWARD);
+
+        bRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        fRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        fRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        bLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        fLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        fRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setDirection(DcMotor.Direction.FORWARD);
+        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         passof = hardwareMap.get(DcMotor.class, "passof");
+        passof.setDirection(DcMotor.Direction.FORWARD);
+        passof.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel.setDirection(DcMotor.Direction.FORWARD);
     }
 
     public void start(){
@@ -83,12 +98,13 @@ public class Fc_test extends OpMode {
         double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
 
+        //field centric's
         double strafe_ = strafe*Math.cos(robotOreintation.thirdAngle) + forward*Math.sin(robotOreintation.thirdAngle);
         double forward_ = forward*Math.cos(robotOreintation.thirdAngle) - strafe*Math.sin(robotOreintation.thirdAngle);
 
         //adjusters for drive speed and a denominator to keep the motors at a constant speed of 1
         double drive_speed = gamepad1.left_trigger;
-        double denominator = Math.max(Math.abs(forward) + Math.abs(strafe) + Math.abs(turn), 1.0);
+        double denominator = Math.max(Math.abs(forward_) + Math.abs(strafe_) + Math.abs(turn), 1.0);
 
         //driving actually
         fLeft.setPower(((forward_ + strafe_ + turn)*(1 - (drive_speed/2)))/denominator);

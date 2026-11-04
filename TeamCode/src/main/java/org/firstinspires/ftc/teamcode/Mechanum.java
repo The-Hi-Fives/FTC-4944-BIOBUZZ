@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -136,8 +135,8 @@ public class Mechanum extends OpMode {
 //            target_velocity_pollen = 1300.0 + (distance_from_goal * 1.8);
 //        }
 
-        telemetry.addData("TVN", target_velocity_nectar);
-        telemetry.addData("TVP", target_velocity_pollen);
+        telemetry.addData("T,V,N", target_velocity_nectar);
+        telemetry.addData("T,V,P", target_velocity_pollen);
 
 
         //set the velocity of the flywheel

@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 
 
+
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
@@ -17,8 +18,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 public class turret extends OpMode {
     private Limelight3A limelight;
     private IMU imu;
-//    private DcMotorEx turret;
-    private DcMotorEx flywheel;
+    DcMotorEx turret;
+    DcMotorEx flywheel;
     DcMotor fRight;
     DcMotor bRight;
     DcMotor fLeft;
@@ -28,8 +29,9 @@ public class turret extends OpMode {
     public void init() {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(8);
-//        turret = hardwareMap.get(DcMotorEx.class, "turret");
+        turret = hardwareMap.get(DcMotorEx.class, "turret");
         flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
+        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         fRight = hardwareMap.get(DcMotor.class, "fRight" );
 
         bRight = hardwareMap.get(DcMotor.class, "bRight" );
@@ -88,7 +90,7 @@ public class turret extends OpMode {
             double x = llResult.getTx();
             double y = llResult.getTy();
             double a = llResult.getTa();
-            if (gamepad1.left_bumper){
+            if (gamepad1.left_bumper || gamepad1.right_bumper){
     //        while (x >= 1) {
     //            turret.setVelocity(400);
     //            x = llResult.getTx();
@@ -102,39 +104,48 @@ public class turret extends OpMode {
     //            turret.setVelocity(0);
     //            x = llResult.getTx();
     //        }
-                while (x >= 1) {
-                    fRight.setPower(0.5);
-                    fLeft.setPower(0.5);
-                    bLeft.setPower(0.5);
-                    bRight.setPower(0.5);
-                    x = llResult.getTx();
-                }
-                while (x <= -1) {
 
-                    fRight.setPower(-0.5);
-                    fLeft.setPower(-0.5);
-                    bLeft.setPower(-0.5);
-                    bRight.setPower(-0.5);
-                    x = llResult.getTx();
-                }
-                while (x > -1 && x < 1) {
+                if (x > 1) {
+                    fRight.setPower(0.4);
+                    fLeft.setPower(0.4);
+                    bLeft.setPower(0.4);
+                    bRight.setPower(0.4);
+
+                } else if (x < -1) {
+
+                    fRight.setPower(-0.4);
+                    fLeft.setPower(-0.4);
+                    bLeft.setPower(-0.4);
+                    bRight.setPower(-0.4);
+
+                } else if (x <= 1 && x > -1) {
                     fRight.setPower(-0);
                     fLeft.setPower(-0);
                     bLeft.setPower(-0);
                     bRight.setPower(-0);
                     telemetry.addLine("Aligned with the goal!!!");
-                    x = llResult.getTx();
+
+
                 }
+            }else{
+                fRight.setPower(-0);
+                fLeft.setPower(-0);
+                bLeft.setPower(-0);
+                bRight.setPower(-0);
 
             }
 
         }
-
-
-
-
-
-
+        if (gamepad1.left_bumper) {
+            flywheel.setVelocity(target_velocity_nectar);
+        }else if (gamepad1.right_bumper){
+            flywheel.setVelocity(target_velocity_pollen);
+        }else{
+            flywheel.setVelocity(0);
+        }
+        telemetry.addData("Velocity", flywheel.getVelocity());
+        turret.setPower(gamepad2.right_stick_x);
+        telemetry.addData("turret", turret.getCurrentPosition());
 
 
         telemetry.update();

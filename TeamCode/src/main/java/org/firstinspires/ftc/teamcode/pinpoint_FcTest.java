@@ -24,9 +24,9 @@ public class pinpoint_FcTest extends OpMode {
     DcMotor bRight;
     DcMotor fLeft;
     DcMotor bLeft;
-    DcMotor intake;
+    DcMotorEx intake;
     DcMotorEx flywheel;
-    DcMotor passof;
+    DcMotorEx passof;
     private GoBildaPinpointDriver pinpoint;
     private Limelight3A limelight;
     private IMU imu;
@@ -44,26 +44,37 @@ public class pinpoint_FcTest extends OpMode {
         imu = hardwareMap.get(IMU.class, "imu");
 
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
 
         fRight = hardwareMap.get(DcMotor.class, "fRight" );
-
         bRight = hardwareMap.get(DcMotor.class, "bRight" );
-
         fLeft = hardwareMap.get(DcMotor.class, "fLeft" );
-
         bLeft = hardwareMap.get(DcMotor.class, "bLeft" );
 
         //Declare drive motor directions
         fLeft.setDirection(DcMotor.Direction.REVERSE);
+        bLeft.setDirection(DcMotor.Direction.REVERSE);
+        fRight.setDirection(DcMotor.Direction.FORWARD);
+        bRight.setDirection(DcMotor.Direction.FORWARD);
 
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        intake.setDirection(DcMotor.Direction.REVERSE);
+        bRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        fRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        fRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        passof = hardwareMap.get(DcMotor.class, "passof");
+        bLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        fLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        fRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        intake.setDirection(DcMotorEx.Direction.FORWARD);
+
+        passof = hardwareMap.get(DcMotorEx.class, "passof");
+        passof.setDirection(DcMotorEx.Direction.FORWARD);
 
         flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel.setDirection(DcMotor.Direction.FORWARD);
     }
 
     public void start(){
@@ -72,6 +83,7 @@ public class pinpoint_FcTest extends OpMode {
 
     @Override
     public void loop() {
+        double hood_p = 0;
         /*
         drive stuff--------------------------------------------------------------------------
          */
@@ -79,8 +91,10 @@ public class pinpoint_FcTest extends OpMode {
         if (gamepad1.dpadUpWasPressed()){
             pinpoint.resetPosAndIMU();
         }
+
         double botHeading = pinpoint.getHeading(AngleUnit.RADIANS);
         telemetry.addData("Heading", botHeading);
+
         // setup for driving
         double forward = -gamepad1.left_stick_y;
         double strafe = gamepad1.left_stick_x;
@@ -106,16 +120,16 @@ public class pinpoint_FcTest extends OpMode {
 
         //literally the intake doesn't need to be very complicated
         if (gamepad1.a) {
-            intake.setPower(1);
+            intake.setVelocity(312);
         }else if (gamepad1.y) {
             //Reverse
-            intake.setPower(-1);
-            passof.setPower(-1);
+            intake.setVelocity(-312);
+            passof.setVelocity(-312);
         }else if (gamepad1.b) {
             //untoggle intake
-            intake.setPower(0);
+            intake.setVelocity(0);
         }else{
-            passof.setPower(0);
+            passof.setVelocity(0);
         }
 
         /*
@@ -144,8 +158,15 @@ public class pinpoint_FcTest extends OpMode {
         double distance_from_goal = getDisatance(distance);
         telemetry.addData("Distance from goal", distance_from_goal);
 //        if (llResult != null && llResult.isValid()) {
-//            target_velocity_nectar = 1600.0 + (distance_from_goal * 2.0);
-//            target_velocity_pollen = 1300.0 + (distance_from_goal * 2.0);
+//        if distance_from_goal > 50 {
+//            target_velocity_nectar = 1500.0 + (distance_from_goal * 2.0);
+//            target_velocity_pollen = 1200.0 + (distance_from_goal * 2.0);
+//        }
+//        if distance_from_goal <= 50 {
+//            target_velocity_nectar = 1500.0
+//            target_velocity_pollen = 1200.0
+//            hood.set_poition(hood_p+(distance_from_goale/1000)
+//        }
 //        }
 
         telemetry.addData("TVN", target_velocity_nectar);
@@ -158,9 +179,8 @@ public class pinpoint_FcTest extends OpMode {
             double speed = flywheel.getVelocity();
             // if the speed of the flywheel is greater than 100 less than the target_velocity_nectar
             if(speed > (target_velocity_nectar-150)){
-                passof.setPower(1);
+                passof.setVelocity(312);
             }
-
 
             telemetry.addLine("Nectar speed active");
 
@@ -168,23 +188,23 @@ public class pinpoint_FcTest extends OpMode {
             flywheel.setVelocity(target_velocity_pollen);
 
             double speed = flywheel.getVelocity();
-            // if the speed of the flywheel is greater than 100 less than the target_velocity_pollen
+            // if the speed of the flywheel is greater than 150 less than the target_velocity_pollen start the passof to shoot
             if(speed > (target_velocity_pollen-150)){
-                passof.setPower(1);
+                passof.setVelocity(312);
             }
 
             telemetry.addLine("Pollen  speed active");
 
         } else {
             flywheel.setVelocity(0);
-            passof.setPower(0);
+            passof.setVelocity(0);
         }
 
         //pass off--------------------------------------------------------------------
 
         //pass off setup not very complicated added in other parts of code this is to run by self
         if(gamepad1.x){
-            passof.setPower(1);
+            passof.setVelocity(312);
         }else{
             passof.setPower(0);
         }
