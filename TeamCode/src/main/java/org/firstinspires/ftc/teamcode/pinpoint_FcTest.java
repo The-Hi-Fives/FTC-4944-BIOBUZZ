@@ -19,8 +19,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 @TeleOp
 public class pinpoint_FcTest extends OpMode {
-    private static final double KP = 0.02;         // Start small and increase until responsive
-    private static final double MAX_POWER = 0.3141592653589999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;     // Cap speed for safety
+    private static final double KP = 0.04;         // Start small and increase until responsive
+    private static final double MAX_POWER = 0.4141592653589999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;     // Cap speed for safety
     private static final double DEADBAND_DEG = 1.0;  // Stop jittering when within 1 degree of center
 
     DcMotor fRight;
@@ -42,8 +42,7 @@ public class pinpoint_FcTest extends OpMode {
     private double goal_height = 52.5;
     private double distance = 0;
 
-    double turret_direction = -1;
-    double set_t_count = 0;
+
     private int turret_t_count;
 
     @Override
@@ -88,9 +87,6 @@ public class pinpoint_FcTest extends OpMode {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setDirection(DcMotor.Direction.REVERSE);
 
-        double targetTicksPerSec = 1600;
-        PIDFCoefficients pidf = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setVelocity(targetTicksPerSec);
 
         turret = hardwareMap.get(DcMotorEx.class, " turret");
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -105,8 +101,8 @@ public class pinpoint_FcTest extends OpMode {
 
     @Override
     public void loop() {
-        double target_velocity_nectar = 2600.0;
-        double target_velocity_pollen = 2100.0;
+        double target_velocity_nectar = 2300.0;
+        double target_velocity_pollen = 1900.0;
         double hood_p = 0;
         double turret_p = 0;
         double hood_position = hood.getPosition();
@@ -152,15 +148,16 @@ public class pinpoint_FcTest extends OpMode {
         if (gamepad1.right_trigger_pressed) {
             intake.setPower(1);
 
-        }else if (gamepad1.y) {
+        }else if (gamepad1.left_trigger_pressed) {
             //Reverse
             intake.setPower(-1);
             passof.setPower(-1);
         }else if (gamepad1.b) {
             //untoggle intake
             intake.setPower(0);
-        }else if(gamepad1.yWasReleased()) {
+        }else if(gamepad1.leftTriggerWasReleased()) {
             intake.setPower(0);
+
         }else{
             passof.setPower(0);
         }
@@ -186,15 +183,15 @@ public class pinpoint_FcTest extends OpMode {
             double tx = llResult.getTx();
             double y = llResult.getTy();
             double a = llResult.getTa();
-            if (gamepad1.left_bumper || gamepad1.right_bumper) {
+            if (! gamepad2.dpad_down) {
                 LLResult result = limelight.getLatestResult();
                 double turretPower = 0.0;
-                if (gamepad1.right_bumper || gamepad1.left_bumper) {
+                if (! gamepad2.dpad_down) {
                     if (result != null && result.isValid()) {
 
 
                         if (Math.abs(tx) > DEADBAND_DEG) {
-                            // Invert sign (-tx * KP) if your turret turns the wrong way
+                            // if your turret turns the wrong way
                             turretPower = Range.clip(tx * KP, -MAX_POWER, MAX_POWER);
                         }
 
