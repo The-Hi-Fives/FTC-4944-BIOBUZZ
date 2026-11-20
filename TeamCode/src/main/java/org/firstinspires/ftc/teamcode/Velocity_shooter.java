@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 
+@TeleOp
 public class Velocity_shooter extends OpMode {
     DcMotorEx flywheel;
 

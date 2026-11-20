@@ -8,14 +8,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 @TeleOp
@@ -24,9 +22,12 @@ public class pinpoint_FcTest extends OpMode {
     DcMotor bRight;
     DcMotor fLeft;
     DcMotor bLeft;
-    DcMotorEx intake;
+    DcMotor intake;
     DcMotorEx flywheel;
-    DcMotorEx passof;
+    DcMotorEx turret;
+    DcMotor passof;
+    Servo hood;
+
     private GoBildaPinpointDriver pinpoint;
     private Limelight3A limelight;
     private IMU imu;
@@ -36,6 +37,10 @@ public class pinpoint_FcTest extends OpMode {
     private double goal_height = 52.5;
     private double distance = 0;
 
+    double turret_direction = -1;
+    double set_t_count = 0;
+    private int turret_t_count;
+
     @Override
     public void init() {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -44,6 +49,8 @@ public class pinpoint_FcTest extends OpMode {
         imu = hardwareMap.get(IMU.class, "imu");
 
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.recalibrateIMU();
+        pinpoint.resetPosAndIMU();
 
         fRight = hardwareMap.get(DcMotor.class, "fRight" );
         bRight = hardwareMap.get(DcMotor.class, "bRight" );
@@ -61,20 +68,30 @@ public class pinpoint_FcTest extends OpMode {
         bLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         fRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        fRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         bLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         fLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        bRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        fRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        intake = hardwareMap.get(DcMotorEx.class, "intake");
-        intake.setDirection(DcMotorEx.Direction.FORWARD);
+        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake.setDirection(DcMotorEx.Direction.REVERSE);
 
-        passof = hardwareMap.get(DcMotorEx.class, "passof");
-        passof.setDirection(DcMotorEx.Direction.FORWARD);
+        passof = hardwareMap.get(DcMotor.class, "passof");
+        passof.setDirection(DcMotorEx.Direction.REVERSE);
 
         flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setDirection(DcMotor.Direction.FORWARD);
+        flywheel.setDirection(DcMotor.Direction.REVERSE);
+
+        double targetTicksPerSec = 1600;
+        PIDFCoefficients pidf = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel.setVelocity(targetTicksPerSec);
+
+        turret = hardwareMap.get(DcMotorEx.class, " turret");
+        turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turret.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        hood = hardwareMap.get(Servo.class, "hood");
     }
 
     public void start(){
@@ -83,7 +100,14 @@ public class pinpoint_FcTest extends OpMode {
 
     @Override
     public void loop() {
+        double target_velocity_nectar = 2600.0;
+        double target_velocity_pollen = 2100.0;
         double hood_p = 0;
+        double turret_p = 0;
+        double hood_position = hood.getPosition();
+
+
+        LLResult llResult = limelight.getLatestResult();
         /*
         drive stuff--------------------------------------------------------------------------
          */
@@ -91,6 +115,7 @@ public class pinpoint_FcTest extends OpMode {
         if (gamepad1.dpadUpWasPressed()){
             pinpoint.resetPosAndIMU();
         }
+
 
         double botHeading = pinpoint.getHeading(AngleUnit.RADIANS);
         telemetry.addData("Heading", botHeading);
@@ -109,36 +134,42 @@ public class pinpoint_FcTest extends OpMode {
         double denominator = Math.max(Math.abs(forward_) + Math.abs(strafe_) + Math.abs(turn), 1.0);
 
         //driving actually
-        fLeft.setPower(((forward_ + strafe_ + turn)*(1 - (drive_speed/2)))/denominator);
-        bLeft.setPower(((forward_ - strafe_ + turn)*(1 - (drive_speed/2)))/denominator);
-        bRight.setPower(((forward_ + strafe_ - turn)*(1 - (drive_speed/2)))/denominator);
-        fRight.setPower(((forward_ - strafe_ - turn)*(1 - (drive_speed/2)))/denominator);
+        fLeft.setPower(((forward_ - strafe_ + turn)*(1 - (drive_speed/1.5)))/denominator);
+        bLeft.setPower(((forward_ + strafe_ + turn)*(1 - (drive_speed/1.5)))/denominator);
+        bRight.setPower(((forward_ + strafe_ - turn)*(1 - (drive_speed/1.5)))/denominator);
+        fRight.setPower(((forward_ - strafe_ - turn)*(1 - (drive_speed/1.5)))/denominator);
 
         /*
         intake -------------------------------------------------------------------
         */
 
         //literally the intake doesn't need to be very complicated
-        if (gamepad1.a) {
-            intake.setVelocity(312);
+        if (gamepad1.right_trigger_pressed) {
+            intake.setPower(1);
+
         }else if (gamepad1.y) {
             //Reverse
-            intake.setVelocity(-312);
-            passof.setVelocity(-312);
+            intake.setPower(-1);
+            passof.setPower(-1);
         }else if (gamepad1.b) {
             //untoggle intake
-            intake.setVelocity(0);
+            intake.setPower(0);
+        }else if(gamepad1.yWasReleased()) {
+            intake.setPower(0);
         }else{
-            passof.setVelocity(0);
+            passof.setPower(0);
         }
 
         /*
         imu and limelight stuff -------------------------------------------
          */
 
-        LLResult llResult = limelight.getLatestResult();
+
+
 
         if (llResult != null && llResult.isValid()){
+            double distance_from_goal = getDisatance(distance);
+            telemetry.addData("Distance from goal", distance_from_goal);
             //add mecha tag two which updates 2d/3d field
             Pose3D botpose = llResult.getBotpose_MT2();
             //limelight telemetry
@@ -146,65 +177,89 @@ public class pinpoint_FcTest extends OpMode {
             telemetry.addData("TX,", llResult.getTx());
             telemetry.addData("TY,", llResult.getTy());
             telemetry.addData("TA,", llResult.getTa());
+
+            double x = llResult.getTx();
+            double y = llResult.getTy();
+            double a = llResult.getTa();
+//            turret_p = 1 - (distance_from_goal/100 - 0.15)
+//            if (gamepad1.left_bumper || gamepad1.right_bumper) {
+//                if (x < 2.5) {
+//                    turret.setPower(turret_p);
+//                } else if (x > -2.5) {
+//                    turret.setPower(-turret_p);
+//                } else {
+//                    turret.setPower(-0);
+//                }
+//            }
+        }
+        telemetry.addData("turret", turret.getCurrentPosition());
+        turret.setPower(gamepad2.left_stick_x/4);
+        if(gamepad2.dpadUpWasPressed()){
+            turret_t_count += 1;
+            int turret_direction = 0;
+            if (turret_t_count % 2 == 0) {
+                turret_direction = 500;
+            }else{
+                telemetry.addLine("yay");
+            }
+            int turret_positition = turret.getCurrentPosition();
+            turret.setTargetPosition(turret_direction-turret_positition);
+            turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            turret.setPower(0.214159265358979323846264338327950288419716939937510582097494459230781640628620899862803482534211706798214808651328230664709384460955058223172535940812848111745028410270193852110555964462294895493038196442881097566593344612847564823378678316527120190914564856692346034861045432664821339360726024914127372458700660631558817488152092096282925409171536436789259036001133053054882046652138414695194151160943305727036575959195309218611738193261179310511854807446237996274956735188575272489122793818301194912983367336244065664308602139494639522473719070217986094370277053921717629317675238467481846766940513200056812714526356082778577134275778960917363717872146844090122495343014654958537105079227968925892354201995611212902196086403441815981362977477130996051870721134999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420198);
+            turret.setPower(0);
+            turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         /*
         shooter stuff-------------------------------------------------------------
          */
         //declare the velocity speed as double so I can modify them easier and adjust them threw out the code
-        double target_velocity_nectar = 1600.0;
-        double target_velocity_pollen = 1300.0;
 
-        double distance_from_goal = getDisatance(distance);
-        telemetry.addData("Distance from goal", distance_from_goal);
+
+
+
+        //Adding hood and shooter tuning to better soot the distance we are aming from #need  to tune!
 //        if (llResult != null && llResult.isValid()) {
-//        if distance_from_goal > 50 {
-//            target_velocity_nectar = 1500.0 + (distance_from_goal * 2.0);
-//            target_velocity_pollen = 1200.0 + (distance_from_goal * 2.0);
-//        }
-//        if distance_from_goal <= 50 {
-//            target_velocity_nectar = 1500.0
-//            target_velocity_pollen = 1200.0
-//            hood.set_poition(hood_p+(distance_from_goale/1000)
-//        }
+        //double deficit_N = distance_from_goal*2.0
+        //double deficit_P = distance_from_goal*2.0
+//
+        // target_velocity_nectar += deficit_N
+        // target_velocity_pollen += deficit_P
+//
+//       if (distance_from_goal >50){
+//             hood_p = (distance_from_goal-50)/100
+//             double hood_po = hood.get_Position
+//             hood_p = Math.max(0.0, Math.min(1.0, hood_po));
+//             hood.setPosisition(hood_p);
 //        }
 
         telemetry.addData("TVN", target_velocity_nectar);
         telemetry.addData("TVP", target_velocity_pollen);
-
+        telemetry.addData("flywheel", flywheel.getVelocity());
         //set the velocity of the flywheel
         if(gamepad1.left_bumper){
             flywheel.setVelocity(target_velocity_nectar);
 
-            double speed = flywheel.getVelocity();
-            // if the speed of the flywheel is greater than 100 less than the target_velocity_nectar
-            if(speed > (target_velocity_nectar-150)){
-                passof.setVelocity(312);
-            }
+
 
             telemetry.addLine("Nectar speed active");
 
         } else if(gamepad1.right_bumper){
             flywheel.setVelocity(target_velocity_pollen);
 
-            double speed = flywheel.getVelocity();
-            // if the speed of the flywheel is greater than 150 less than the target_velocity_pollen start the passof to shoot
-            if(speed > (target_velocity_pollen-150)){
-                passof.setVelocity(312);
-            }
 
             telemetry.addLine("Pollen  speed active");
 
         } else {
-            flywheel.setVelocity(0);
-            passof.setVelocity(0);
+            flywheel.setPower(0);
+            passof.setPower(0);
         }
 
         //pass off--------------------------------------------------------------------
 
         //pass off setup not very complicated added in other parts of code this is to run by self
         if(gamepad1.x){
-            passof.setVelocity(312);
+            passof.setPower(1);
         }else{
             passof.setPower(0);
         }
@@ -218,7 +273,6 @@ public class pinpoint_FcTest extends OpMode {
 
         return heightDifference / Math.tan(Math.toRadians(angleToTarget));
     }
-
 
 }
 
