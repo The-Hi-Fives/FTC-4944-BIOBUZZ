@@ -12,12 +12,17 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 @TeleOp
 public class pinpoint_FcTest extends OpMode {
+    private static final double KP = 0.02;         // Start small and increase until responsive
+    private static final double MAX_POWER = 0.3141592653589999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;     // Cap speed for safety
+    private static final double DEADBAND_DEG = 1.0;  // Stop jittering when within 1 degree of center
+
     DcMotor fRight;
     DcMotor bRight;
     DcMotor fLeft;
@@ -88,7 +93,7 @@ public class pinpoint_FcTest extends OpMode {
         flywheel.setVelocity(targetTicksPerSec);
 
         turret = hardwareMap.get(DcMotorEx.class, " turret");
-        turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
         hood = hardwareMap.get(Servo.class, "hood");
@@ -178,19 +183,32 @@ public class pinpoint_FcTest extends OpMode {
             telemetry.addData("TY,", llResult.getTy());
             telemetry.addData("TA,", llResult.getTa());
 
-            double x = llResult.getTx();
+            double tx = llResult.getTx();
             double y = llResult.getTy();
             double a = llResult.getTa();
-//            turret_p = 1 - (distance_from_goal/100 - 0.15)
-//            if (gamepad1.left_bumper || gamepad1.right_bumper) {
-//                if (x < 2.5) {
-//                    turret.setPower(turret_p);
-//                } else if (x > -2.5) {
-//                    turret.setPower(-turret_p);
-//                } else {
-//                    turret.setPower(-0);
-//                }
-//            }
+            if (gamepad1.left_bumper || gamepad1.right_bumper) {
+                LLResult result = limelight.getLatestResult();
+                double turretPower = 0.0;
+                if (gamepad1.right_bumper || gamepad1.left_bumper) {
+                    if (result != null && result.isValid()) {
+
+
+                        if (Math.abs(tx) > DEADBAND_DEG) {
+                            // Invert sign (-tx * KP) if your turret turns the wrong way
+                            turretPower = Range.clip(tx * KP, -MAX_POWER, MAX_POWER);
+                        }
+
+                        telemetry.addData("tx (deg)", "%.2f", tx);
+                    } else {
+                        telemetry.addData("Target", "None");
+                    }
+
+                    turret.setPower(turretPower);
+                    telemetry.addData("Turret Power", "%.2f", turretPower);
+                    telemetry.addLine(":):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):)");
+                    telemetry.update();
+                }
+            }
         }
         telemetry.addData("turret", turret.getCurrentPosition());
         turret.setPower(gamepad2.left_stick_x/4);
