@@ -82,6 +82,8 @@ public class auto_basic extends OpMode {
         turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
         hood = hardwareMap.get(Servo.class, "hood");
+        drive_forward();
+
     }
 
     public void start(){
@@ -89,52 +91,37 @@ public class auto_basic extends OpMode {
     }
     @Override
     public void loop() {
-        fLeft.setPower(1);
-        bLeft.setPower(1);
-        fRight.setPower(1);
-        bRight.setPower(1);
-        sleep(50);
+
+    }
+    public void drive_forward(){
+        fLeft.setPower(0.7);
+        bLeft.setPower(0.7);
+        fRight.setPower(0.7);
+        bRight.setPower(0.7);
+        sleep(500);
         fLeft.setPower(0);
         bLeft.setPower(0);
         fRight.setPower(0);
         bRight.setPower(0);
-        flywheel.setVelocity(2400);
-        sleep(1000);
+
+    }
+    public void shoot(){
         passof.setPower(1);
         intake.setPower(1);
-        sleep(350);
-        intake.setPower(0);
+        sleep(500);
         passof.setPower(0);
-        sleep(350);
-        passof.setPower(1);
-        intake.setPower(1);
-        sleep(350);
         intake.setPower(0);
-        passof.setPower(0);
-        sleep(350);
-        passof.setPower(1);
-        intake.setPower(1);
-        intake.setPower(0);
-        passof.setPower(0);
-        sleep(350);
-        passof.setPower(1);
-        intake.setPower(1);
-        sleep(350);
-        intake.setPower(0);
-        passof.setPower(0);
-        fLeft.setPower(1);
-        bLeft.setPower(1);
-        fRight.setPower(1);
-        bRight.setPower(1);
-        sleep(1000);
-        fLeft.setPower(1);
-        bLeft.setPower(-1);
-        fRight.setPower(-1);
-        bRight.setPower(1);
-        sleep(1750);
+    }
+    public void strafe(){
+        fLeft.setPower(0.7);
+        bLeft.setPower(-0.7);
+        fRight.setPower(-0.7);
+        bRight.setPower(0.7);
+        sleep(500);
         fLeft.setPower(0);
         bLeft.setPower(0);
         fRight.setPower(0);
         bRight.setPower(0);
+
     }
 }
