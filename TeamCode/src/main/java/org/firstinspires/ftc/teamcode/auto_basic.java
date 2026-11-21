@@ -92,8 +92,8 @@ public class auto_basic extends OpMode {
         shoot();
         shoot();
         shoot();
-        drive_forward(9*250);
-        strafe(2000);
+        drive_forward(10*250);
+        strafe_right(2000);
 
     }
 
@@ -123,11 +123,23 @@ public class auto_basic extends OpMode {
         passof.setPower(0);
         intake.setPower(0);
     }
-    public void strafe(long drivedistance){
+    public void strafe_right(long drivedistance){
         fLeft.setPower(0.7);
         bLeft.setPower(-0.7);
         fRight.setPower(-0.7);
         bRight.setPower(0.7);
+        sleep(drivedistance);
+        fLeft.setPower(0);
+        bLeft.setPower(0);
+        fRight.setPower(0);
+        bRight.setPower(0);
+
+    }
+    public void strafe_left(long drivedistance){
+        fLeft.setPower(-0.7);
+        bLeft.setPower(0.7);
+        fRight.setPower(0.7);
+        bRight.setPower(-0.7);
         sleep(drivedistance);
         fLeft.setPower(0);
         bLeft.setPower(0);

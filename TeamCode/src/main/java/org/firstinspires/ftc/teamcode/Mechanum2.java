@@ -40,11 +40,17 @@ public class Mechanum2 extends OpMode {
     private double Camera_Height = 14.73215;
     private double Camera_angle = 45;
     private double goal_height = 52.5;
-    private double distance = 0;
+    private double distance = 0.0;
 
     double turret_direction = -1;
     double set_t_count = 0;
     private int turret_t_count;
+
+    private double hood_position_two = 0.04;
+    public static final double P = 2.5;
+    public static final double I = 0.1;
+    public static final double D =0.2;
+    public static final double F = 0.5;
 
     @Override
     public void init() {
@@ -88,7 +94,10 @@ public class Mechanum2 extends OpMode {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setDirection(DcMotor.Direction.REVERSE);
 
-        PIDFCoefficients pidf = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        PIDFCoefficients pidfNew = new PIDFCoefficients(P,I,D,F);
+        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfNew);
+
 
 
         turret = hardwareMap.get(DcMotorEx.class, " turret");
@@ -96,6 +105,8 @@ public class Mechanum2 extends OpMode {
         turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
         hood = hardwareMap.get(Servo.class, "hood");
+        hood.setDirection(Servo.Direction.FORWARD);
+
     }
 
     public void start(){
@@ -104,17 +115,32 @@ public class Mechanum2 extends OpMode {
 
     @Override
     public void loop() {
+        PIDFCoefficients pidfOrig = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        PIDFCoefficients pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        telemetry.addData("P I D F (orig", "%.04f", "%.04f", "%.04f", "%0.4f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f);
+        telemetry.addData("PIDF (modified","%.04f", "%.04f", "%.04f", "%0.4f", pidfModified.p, pidfModified.i, pidfModified.d, pidfModified.f);
+        telemetry.addData("Run time (sec)", getRuntime());
+
         double target_velocity_nectar = 2300.0;
         double target_velocity_pollen = 2000.0;
         double hood_p = 0;
         double turret_p = 0;
-        double hood_position = hood.getPosition();
+       double hood_position = hood.getPosition();
 
 
         LLResult llResult = limelight.getLatestResult();
         /*
         drive stuff--------------------------------------------------------------------------
          */
+        if (gamepad2.dpadLeftWasPressed()){
+            hood_position_two += 0.04;
+        }else if (gamepad2.dpadRightWasPressed()){
+            hood_position_two -= 0.04;
+        }else if (gamepad2.dpadUpWasPressed()){
+            hood_position_two = 0.03;
+        }
+        hood_position_two = Range.clip(hood_position, 0.03, 0.35);
 
         if (gamepad1.dpadUpWasPressed()){
             pinpoint.resetPosAndIMU();
@@ -160,6 +186,7 @@ public class Mechanum2 extends OpMode {
             intake.setPower(0);
         }else if(gamepad1.leftTriggerWasReleased() || gamepad2.leftTriggerWasReleased()) {
             intake.setPower(0);
+            passof.setPower(0);
         }else{
             passof.setPower(0);
         }
@@ -255,7 +282,7 @@ public class Mechanum2 extends OpMode {
 
         } else {
             flywheel.setPower(0);
-            passof.setPower(0);
+
         }
 
         //pass off--------------------------------------------------------------------
@@ -266,6 +293,7 @@ public class Mechanum2 extends OpMode {
         }else{
             passof.setPower(0);
         }
+        hood.setPosition(hood_position);
         //telemetry.update so it updates telemetry so it knows what each value is
         telemetry.update();
     }
@@ -278,4 +306,3 @@ public class Mechanum2 extends OpMode {
     }
 
 }
-
