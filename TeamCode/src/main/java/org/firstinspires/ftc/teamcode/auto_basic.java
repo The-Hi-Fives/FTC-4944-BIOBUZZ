@@ -30,6 +30,8 @@ public class auto_basic extends OpMode {
     private Limelight3A limelight;
     private IMU imu;
 
+
+
     @Override
     public void init() {
 
@@ -82,7 +84,15 @@ public class auto_basic extends OpMode {
         turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
         hood = hardwareMap.get(Servo.class, "hood");
-        drive_forward();
+        //250 == 1 foot
+        drive_forward(250);
+        flywheel.setVelocity(2000);
+        shoot();
+        shoot();
+        shoot();
+        shoot();
+        drive_forward(9*250);
+        strafe(2000);
 
     }
 
@@ -93,12 +103,12 @@ public class auto_basic extends OpMode {
     public void loop() {
 
     }
-    public void drive_forward(){
+    public void drive_forward(long drivetdistance){
         fLeft.setPower(0.7);
         bLeft.setPower(0.7);
         fRight.setPower(0.7);
         bRight.setPower(0.7);
-        sleep(500);
+        sleep(drivetdistance);
         fLeft.setPower(0);
         bLeft.setPower(0);
         fRight.setPower(0);
@@ -112,12 +122,12 @@ public class auto_basic extends OpMode {
         passof.setPower(0);
         intake.setPower(0);
     }
-    public void strafe(){
+    public void strafe(long drivedistance){
         fLeft.setPower(0.7);
         bLeft.setPower(-0.7);
         fRight.setPower(-0.7);
         bRight.setPower(0.7);
-        sleep(500);
+        sleep(drivedistance);
         fLeft.setPower(0);
         bLeft.setPower(0);
         fRight.setPower(0);
