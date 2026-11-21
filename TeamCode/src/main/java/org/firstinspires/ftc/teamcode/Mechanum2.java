@@ -88,9 +88,8 @@ public class Mechanum2 extends OpMode {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setDirection(DcMotor.Direction.REVERSE);
 
-        double targetTicksPerSec = 2300;
         PIDFCoefficients pidf = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setVelocity(targetTicksPerSec);
+
 
         turret = hardwareMap.get(DcMotorEx.class, " turret");
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
