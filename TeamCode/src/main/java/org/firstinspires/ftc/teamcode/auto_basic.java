@@ -87,6 +87,7 @@ public class auto_basic extends OpMode {
         //250 == 1 foot
         drive_forward(250);
         flywheel.setVelocity(2000);
+        sleep(1000);
         shoot();
         shoot();
         shoot();
