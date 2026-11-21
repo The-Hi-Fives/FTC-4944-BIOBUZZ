@@ -89,6 +89,15 @@ public class auto_basic extends OpMode {
     }
     @Override
     public void loop() {
+        fLeft.setPower(1);
+        bLeft.setPower(1);
+        fRight.setPower(1);
+        bRight.setPower(1);
+        sleep(50);
+        fLeft.setPower(0);
+        bLeft.setPower(0);
+        fRight.setPower(0);
+        bRight.setPower(0);
         flywheel.setVelocity(2400);
         sleep(1000);
         passof.setPower(1);
@@ -100,6 +109,11 @@ public class auto_basic extends OpMode {
         passof.setPower(1);
         intake.setPower(1);
         sleep(350);
+        intake.setPower(0);
+        passof.setPower(0);
+        sleep(350);
+        passof.setPower(1);
+        intake.setPower(1);
         intake.setPower(0);
         passof.setPower(0);
         sleep(350);
