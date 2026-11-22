@@ -94,9 +94,9 @@ public class Mechanum2 extends OpMode {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setDirection(DcMotor.Direction.REVERSE);
 
-
-        PIDFCoefficients pidfNew = new PIDFCoefficients(P,I,D,F);
-        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfNew);
+//
+//        PIDFCoefficients pidfNew = new PIDFCoefficients(P,I,D,F);
+//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfNew);
 
 
 
@@ -115,15 +115,15 @@ public class Mechanum2 extends OpMode {
 
     @Override
     public void loop() {
-        PIDFCoefficients pidfOrig = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-        PIDFCoefficients pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        telemetry.addData("P I D F (orig", "%.04f", "%.04f", "%.04f", "%0.4f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f);
-        telemetry.addData("PIDF (modified","%.04f", "%.04f", "%.04f", "%0.4f", pidfModified.p, pidfModified.i, pidfModified.d, pidfModified.f);
+//        PIDFCoefficients pidfOrig = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+//        PIDFCoefficients pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+//
+//        telemetry.addData("P I D F (orig", "%.04f", "%.04f", "%.04f", "%0.4f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f);
+//        telemetry.addData("PIDF (modified","%.04f", "%.04f", "%.04f", "%0.4f", pidfModified.p, pidfModified.i, pidfModified.d, pidfModified.f);
         telemetry.addData("Run time (sec)", getRuntime());
 
-        double target_velocity_nectar = 2300.0;
-        double target_velocity_pollen = 2000.0;
+        double target_velocity_nectar = 2100.0;
+        double target_velocity_pollen = 1630.0;
         double hood_p = 0;
         double turret_p = 0;
        double hood_position = hood.getPosition();
@@ -133,14 +133,14 @@ public class Mechanum2 extends OpMode {
         /*
         drive stuff--------------------------------------------------------------------------
          */
-        if (gamepad2.dpadLeftWasPressed()){
-            hood_position_two += 0.04;
-        }else if (gamepad2.dpadRightWasPressed()){
-            hood_position_two -= 0.04;
-        }else if (gamepad2.dpadUpWasPressed()){
+        if (gamepad2.dpad_left){
+            hood_position_two += 0.05;
+        }else if (gamepad2.dpad_right){
+            hood_position_two -= 0.05;
+        }else if (gamepad2.dpad_up){
             hood_position_two = 0.03;
         }
-        hood_position_two = Range.clip(hood_position, 0.03, 0.35);
+        hood_position_two = Range.clip(hood_position_two, 0.03, 0.43);
 
         if (gamepad1.dpadUpWasPressed()){
             pinpoint.resetPosAndIMU();
@@ -176,7 +176,7 @@ public class Mechanum2 extends OpMode {
         //literally the intake doesn't need to be very complicated
         if (gamepad1.right_trigger_pressed || gamepad2.right_trigger_pressed) {
             intake.setPower(1);
-
+            passof.setPower(0.5);
         }else if (gamepad1.left_trigger_pressed || gamepad2.left_trigger_pressed) {
             //Reverse
             intake.setPower(-1);
@@ -220,7 +220,7 @@ public class Mechanum2 extends OpMode {
 
 
                         if (Math.abs(tx) > DEADBAND_DEG) {
-                            // Invert sign (-tx * KP) if your turret turns the wrong way
+                            // Invert (-tx * KP) if your turret turns the wrong way
                             turretPower = Range.clip(tx * KP, -MAX_POWER, MAX_POWER);
                         }
 
@@ -231,7 +231,7 @@ public class Mechanum2 extends OpMode {
 
                     turret.setPower(turretPower);
                     telemetry.addData("Turret Power", "%.2f", turretPower);
-                    telemetry.addLine(":):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):):)");
+
                     telemetry.update();
 
             }
@@ -248,7 +248,7 @@ public class Mechanum2 extends OpMode {
 
 
 
-        //Adding hood and shooter tuning to better soot the distance we are aming from #need  to tune!
+        //Adding hood and shooter tuning to better soot the distance we are aiming from #need to tune!
 //        if (llResult != null && llResult.isValid()) {
         //double deficit_N = distance_from_goal*2.0
         //double deficit_P = distance_from_goal*2.0
@@ -288,12 +288,12 @@ public class Mechanum2 extends OpMode {
         //pass off--------------------------------------------------------------------
 
         //pass off setup not very complicated added in other parts of code this is to run by self
-        if(gamepad1.x || gamepad2.x){
-            passof.setPower(1);
+        if(gamepad2.x || gamepad2.x){
+            passof.setPower(0.85);
         }else{
             passof.setPower(0);
         }
-        hood.setPosition(hood_position);
+        hood.setPosition(hood_position_two);
         //telemetry.update so it updates telemetry so it knows what each value is
         telemetry.update();
     }
