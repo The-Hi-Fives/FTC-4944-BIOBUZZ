@@ -47,10 +47,13 @@ public class Mechanum2 extends OpMode {
     private int turret_t_count;
 
     private double hood_position_two = 0.04;
-    public static final double P = 2.5;
-    public static final double I = 0.1;
-    public static final double D =0.2;
-    public static final double F = 0.5;
+    public static double P = 1.2;
+    public static double I = 0.117;
+    public static double D = 0.0000;
+    public static double F = 11.7;
+
+    private PIDFCoefficients pidfOrig;
+    private PIDFCoefficients pidfModified;
 
     @Override
     public void init() {
@@ -94,11 +97,14 @@ public class Mechanum2 extends OpMode {
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setDirection(DcMotor.Direction.REVERSE);
 
-//
-//        PIDFCoefficients pidfNew = new PIDFCoefficients(P,I,D,F);
-//        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfNew);
+        pidfOrig = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
 
+// 2. Apply your custom PIDF values
+        PIDFCoefficients pidfNew = new PIDFCoefficients(P, I, D, F);
+        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfNew);
 
+// 3. Read back the updated values to confirm they applied
+        pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
 
         turret = hardwareMap.get(DcMotorEx.class, " turret");
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -115,12 +121,12 @@ public class Mechanum2 extends OpMode {
 
     @Override
     public void loop() {
-//        PIDFCoefficients pidfOrig = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-//        PIDFCoefficients pidfModified = flywheel.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-//
-//        telemetry.addData("P I D F (orig", "%.04f", "%.04f", "%.04f", "%0.4f", pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f);
-//        telemetry.addData("PIDF (modified","%.04f", "%.04f", "%.04f", "%0.4f", pidfModified.p, pidfModified.i, pidfModified.d, pidfModified.f);
-        telemetry.addData("Run time (sec)", getRuntime());
+
+        telemetry.addData("P I D F (orig)", "%.04f, %.04f, %.04f, %.04f",
+                pidfOrig.p, pidfOrig.i, pidfOrig.d, pidfOrig.f);
+        telemetry.addData("P I D F (mod)", "%.04f, %.04f, %.04f, %.04f",
+                pidfModified.p, pidfModified.i, pidfModified.d, pidfModified.f);
+        telemetry.addData("Run time (sec)", "%.2f", getRuntime());
 
         double target_velocity_nectar = 2100.0;
         double target_velocity_pollen = 1630.0;
@@ -137,7 +143,7 @@ public class Mechanum2 extends OpMode {
             hood_position_two += 0.05;
         }else if (gamepad2.dpad_right){
             hood_position_two -= 0.05;
-        }else if (gamepad2.dpad_up){
+        }else if (gamepad2.dpad_down){
             hood_position_two = 0.03;
         }
         hood_position_two = Range.clip(hood_position_two, 0.03, 0.43);
@@ -266,24 +272,18 @@ public class Mechanum2 extends OpMode {
         telemetry.addData("TVN", target_velocity_nectar);
         telemetry.addData("TVP", target_velocity_pollen);
         telemetry.addData("flywheel", flywheel.getVelocity());
-        //set the velocity of the flywheel
-        if(gamepad2.left_bumper){
+
+        if (gamepad2.left_bumper) {
+            //live tuning well your holding tht eshoot button down
+            flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(P, I, D, F));
             flywheel.setVelocity(target_velocity_nectar);
-
-
-
-            telemetry.addLine("Nectar speed active");
-
-        } else if(gamepad2.right_bumper){
+        } else if (gamepad2.right_bumper) {
+            flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(P, I, D, F));
             flywheel.setVelocity(target_velocity_pollen);
-
-
-            telemetry.addLine("Pollen  speed active");
-
         } else {
             flywheel.setPower(0);
-
         }
+
 
         //pass off--------------------------------------------------------------------
 
@@ -296,6 +296,7 @@ public class Mechanum2 extends OpMode {
         hood.setPosition(hood_position_two);
         //telemetry.update so it updates telemetry so it knows what each value is
         telemetry.update();
+        pinpoint.update();
     }
 
     public double getDisatance(double ty){

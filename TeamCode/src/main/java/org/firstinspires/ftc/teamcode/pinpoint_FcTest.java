@@ -104,10 +104,11 @@ public class pinpoint_FcTest extends OpMode {
     @Override
     public void loop() {
         double target_velocity_nectar = 2300.0;
-        double target_velocity_pollen = 1900.0;
+        double target_velocity_pollen = 1630.0;
         double hood_p = 0;
         double turret_p = 0;
         double hood_position = hood.getPosition();
+        telemetry.addData("hood", hood_position);
 
 
         LLResult llResult = limelight.getLatestResult();
@@ -282,6 +283,7 @@ public class pinpoint_FcTest extends OpMode {
         }
         //telemetry.update so it updates telemetry so it knows what each value is
         telemetry.update();
+        pinpoint.update();
     }
 
     public double getDisatance(double ty){
